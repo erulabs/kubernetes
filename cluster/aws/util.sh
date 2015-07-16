@@ -63,7 +63,9 @@ MINION_SG_NAME="kubernetes-minion-${CLUSTER_ID}"
 # Be sure to map all the ephemeral drives.  We can specify more than we actually have.
 # TODO: Actually mount the correct number (especially if we have more), though this is non-trivial, and
 #  only affects the big storage instance types, which aren't a typical use case right now.
-BLOCK_DEVICE_MAPPINGS="[{\"DeviceName\": \"/dev/sdc\",\"VirtualName\":\"ephemeral0\"},{\"DeviceName\": \"/dev/sdd\",\"VirtualName\":\"ephemeral1\"},{\"DeviceName\": \"/dev/sde\",\"VirtualName\":\"ephemeral2\"},{\"DeviceName\": \"/dev/sdf\",\"VirtualName\":\"ephemeral3\"}]"
+BLOCK_DEVICE_MAPPINGS_BASE="{\"DeviceName\": \"/dev/sdc\",\"VirtualName\":\"ephemeral0\"},{\"DeviceName\": \"/dev/sdd\",\"VirtualName\":\"ephemeral1\"},{\"DeviceName\": \"/dev/sde\",\"VirtualName\":\"ephemeral2\"},{\"DeviceName\": \"/dev/sdf\",\"VirtualName\":\"ephemeral3\"}"
+BLOCK_DEVICE_MAPPINGS="[${BLOCK_DEVICE_MAPPINGS_BASE}]"
+MINION_BLOCK_DEVICE_MAPPINGS="[{\"DeviceName\":\"/dev/sda1\",\"Ebs\":{\"DeleteOnTermination\":true,,\"VolumeSize\":${MINION_DISK_SIZE},\"VolumeType\":\"${MINION_DISK_TYPE}\"}}, ${BLOCK_DEVICE_MAPPINGS_BASE}]"
 
 function json_val {
     python -c 'import json,sys;obj=json.load(sys.stdin);print obj'$1''
@@ -954,7 +956,7 @@ function kube-up {
       --key-name ${AWS_SSH_KEY_NAME} \
       --security-groups ${MINION_SG_ID} \
       ${public_ip_option} \
-      --block-device-mappings "${BLOCK_DEVICE_MAPPINGS}" \
+      --block-device-mappings "${MINION_BLOCK_DEVICE_MAPPINGS}" \
       --user-data "file://${KUBE_TEMP}/minion-user-data"
 
   echo "Creating autoscaling group"
